@@ -1,0 +1,38 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/cache
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+*.log
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# SQLite runtime temporary files (keep tutor.db for instant seed, ignore wal/shm)
+*.db-wal
+*.db-shm
+*.db-journal
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
