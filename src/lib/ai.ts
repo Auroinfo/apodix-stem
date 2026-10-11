@@ -144,6 +144,8 @@ async function callOpenAICompatible(
     headers['Authorization'] = `Bearer ${apiKey}`;
   }
 
+  const effectiveMaxTokens = options.max_tokens ?? model.max_tokens ?? 1000;
+
   const body: any = {
     model: model.model_id,
     messages: messages.map(m => ({
@@ -151,18 +153,28 @@ async function callOpenAICompatible(
       content: m.content
     })),
     temperature: options.temperature ?? model.temperature ?? 0.7,
-    max_tokens: options.max_tokens ?? model.max_tokens ?? 3000,
+    max_tokens: effectiveMaxTokens,
   };
 
-  if (options.response_format === 'json') {
+  // Only pass type: 'json_object' to providers that support OpenAI's strict json_object format (LM Studio requires json_schema or text)
+  if (options.response_format === 'json' && model.provider !== 'lmstudio') {
     body.response_format = { type: 'json_object' };
   }
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body)
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!res.ok) {
     const errorText = await res.text();

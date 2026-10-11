@@ -57,7 +57,9 @@ Evaluate this step strictly and return valid JSON with this exact schema:
       { response_format: 'json', temperature: 0.3 }
     );
 
-    const parsed = JSON.parse(responseText);
+    const clean = responseText.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : clean);
 
     if (parsed.status === 'faulty' && parsed.detected_misconception && milestoneId) {
       try {

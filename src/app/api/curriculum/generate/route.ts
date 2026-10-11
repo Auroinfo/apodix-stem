@@ -158,7 +158,8 @@ You MUST output strictly valid JSON with this schema:
       cleanJson = cleanJson.replace(/^```\s*/, '').replace(/```\s*$/, '');
     }
 
-    const parsed = JSON.parse(cleanJson);
+    const match = cleanJson.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(match ? match[0] : cleanJson);
 
     const studyPathId = `sp-${Date.now()}`;
     const insertPath = db.prepare(`
