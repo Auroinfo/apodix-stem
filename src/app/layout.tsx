@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import Navbar from '@/components/Navbar';
-import AuthWrapper from '@/components/AuthWrapper';
 
 export const metadata: Metadata = {
   title: 'APODIX · First-Principles STEM Derivation Engine',
@@ -16,10 +15,8 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen bg-[#07090e] text-slate-100 flex flex-col antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
-        <AuthWrapper>
-          <Navbar />
-          <main className="flex-1 flex flex-col">{children}</main>
-        </AuthWrapper>
+        <Navbar />
+        <main className="flex-1 flex flex-col">{children}</main>
       </body>
     </html>
   );

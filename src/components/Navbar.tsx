@@ -11,30 +11,42 @@ import {
   Settings,
   Cpu,
   Sparkles,
-  Terminal,
-  ChevronRight,
   ShieldCheck,
+  Lock,
   LogOut
 } from 'lucide-react';
-import { ModelConfig } from '@/lib/types';
-import { useAuth } from '@/components/AuthWrapper';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
-  const [activeModel, setActiveModel] = useState<ModelConfig | null>(null);
+  const [modelStatus, setModelStatus] = useState<{ name: string; provider: string; is_local: boolean } | null>(null);
+  const [adminUser, setAdminUser] = useState<{ email: string; role: string } | null>(null);
 
   useEffect(() => {
-    fetch('/api/admin/models')
+    // Public model status
+    fetch('/api/model-status')
       .then(res => res.json())
       .then(data => {
-        if (data.models) {
-          const active = data.models.find((m: ModelConfig) => m.is_active);
-          setActiveModel(active || data.models[0] || null);
+        if (data.name) setModelStatus(data);
+      })
+      .catch(() => {});
+
+    // Check if admin is currently authenticated
+    fetch('/api/auth/session')
+      .then(res => res.json())
+      .then(data => {
+        if (data.authenticated && data.user) {
+          setAdminUser(data.user);
+        } else {
+          setAdminUser(null);
         }
       })
       .catch(() => {});
-  }, []);
+  }, [pathname]);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setAdminUser(null);
+  };
 
   const navLinks = [
     { href: '/', label: 'Curricula', icon: Compass },
@@ -92,43 +104,42 @@ export default function Navbar() {
           })}
         </nav>
 
-        {/* Right Nav: Active Model & Admin & User Auth */}
+        {/* Right Nav: Active Model & Admin */}
         <div className="flex items-center gap-2.5">
           <Link
             href="/admin"
             className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0d121c] border border-[#1e273a] hover:border-emerald-500/40 transition-all text-xs text-slate-300 shadow-sm group"
-            title="Configure AI Models in Admin"
+            title="Active AI Model (Configurable in Admin)"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="font-mono text-slate-200 truncate max-w-[110px] sm:max-w-[150px] text-[11px]">
-              {activeModel ? activeModel.name : 'LM Studio Qwen'}
+            <span className="font-mono text-slate-200 truncate max-w-[120px] sm:max-w-[160px] text-[11px]">
+              {modelStatus ? modelStatus.name : 'LM Studio Qwen 27B'}
             </span>
           </Link>
 
-          {user && (
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#0a101b] border border-[#1d293d] text-[11px] font-mono text-slate-300">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="truncate max-w-[120px]">{user.email.split('@')[0]}</span>
+          {adminUser ? (
+            <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#0a101b] border border-emerald-500/40 text-[11px] font-mono text-slate-300">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-emerald-400 font-semibold truncate max-w-[120px]">Superadmin</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-xl bg-[#0d121c] hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-[#1e273a] hover:border-rose-900 transition-colors"
+                title="Sign Out of Admin"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
-          )}
-
-          <Link
-            href="/admin"
-            className="p-2 rounded-xl bg-[#0d121c] hover:bg-[#151c2c] text-slate-400 hover:text-white border border-[#1e273a] transition-colors"
-            title="Admin Console"
-          >
-            <Settings className="w-4 h-4 text-emerald-400" />
-          </Link>
-
-          {user && (
-            <button
-              onClick={() => logout()}
-              className="p-2 rounded-xl bg-[#0d121c] hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-[#1e273a] hover:border-rose-900 transition-colors"
-              title="Sign Out"
+          ) : (
+            <Link
+              href="/admin"
+              className="p-2 rounded-xl bg-[#0d121c] hover:bg-[#151c2c] text-slate-400 hover:text-white border border-[#1e273a] transition-colors"
+              title="Superadmin Login"
             >
-              <LogOut className="w-4 h-4" />
-            </button>
+              <Settings className="w-4 h-4 text-emerald-400" />
+            </Link>
           )}
         </div>
       </div>
