@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { getAdminSessionFromRequest } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: Request) {
+  const session = getAdminSessionFromRequest(req);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized: Superadmin login required' }, { status: 401 });
+  }
+
   try {
     const rows = db.prepare('SELECT key, value FROM app_settings').all() as { key: string; value: string }[];
     const settings: Record<string, any> = {};
@@ -17,6 +23,11 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const session = getAdminSessionFromRequest(req);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized: Superadmin login required' }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const insertStmt = db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)');

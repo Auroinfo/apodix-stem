@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { ModelConfig } from '@/lib/types';
+import { getAdminSessionFromRequest } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: Request) {
+  const session = getAdminSessionFromRequest(req);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized: Superadmin login required' }, { status: 401 });
+  }
+
   try {
     const models = db.prepare('SELECT * FROM models_config ORDER BY created_at DESC').all() as any[];
     const mapped = models.map(m => ({
@@ -18,6 +24,11 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const session = getAdminSessionFromRequest(req);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized: Superadmin login required' }, { status: 401 });
+  }
+
   try {
     const body: ModelConfig = await req.json();
     const id = body.id || `model-${Date.now()}`;
@@ -52,6 +63,11 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
+  const session = getAdminSessionFromRequest(req);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized: Superadmin login required' }, { status: 401 });
+  }
+
   try {
     const { id, is_active } = await req.json();
     if (is_active) {
@@ -67,6 +83,11 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const session = getAdminSessionFromRequest(req);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized: Superadmin login required' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
